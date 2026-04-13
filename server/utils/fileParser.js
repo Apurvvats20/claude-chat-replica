@@ -1,8 +1,9 @@
-const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
 
 async function extractText(buffer, mimetype) {
   if (mimetype === "application/pdf") {
+    // Lazy require avoids pdf-parse's startup side-effect that crashes in Railway
+    const pdfParse = require("pdf-parse/lib/pdf-parse.js");
     const data = await pdfParse(buffer);
     return data.text;
   }
