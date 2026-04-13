@@ -61,14 +61,25 @@ router.post("/", async (req, res) => {
     );
     res.end();
   } catch (err) {
-    console.error("Chat error:", err);
+    console.error("Chat error:", err?.status, err?.message, err?.error);
+    const detail = err?.error?.error?.message || err?.message || "Unknown error";
     if (!res.headersSent) {
-      res.status(500).json({ error: "Failed to get response from Claude" });
+      res.status(500).json({ error: detail });
     } else {
-      res.write(`data: ${JSON.stringify({ error: err.message, done: true })}\n\n`);
+      res.write(`data: ${JSON.stringify({ error: detail, done: true })}\n\n`);
       res.end();
     }
   }
+});
+
+// GET /api/chat/debug — check env config (never expose key in prod)
+router.get("/debug", (req, res) => {
+  res.json({
+    model: process.env.MODEL || "(not set, using default)",
+    maxTokens: process.env.MAX_TOKENS || "(not set)",
+    apiKeySet: !!process.env.ANTHROPIC_API_KEY,
+    apiKeyPrefix: process.env.ANTHROPIC_API_KEY?.slice(0, 16) + "...",
+  });
 });
 
 // DELETE /api/chat/session — clear doc context
