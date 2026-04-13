@@ -6,7 +6,14 @@ const { buildContext } = require("../utils/contextManager");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// Create client lazily so missing API key doesn't crash the server at startup
+function getAnthropic() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+  }
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
 
 // In-memory session document store (single user — simple map)
 const sessionDocs = new Map();
@@ -36,6 +43,7 @@ router.post("/", async (req, res) => {
   const docContext = sessionDocs.get(sessionId) || null;
 
   try {
+    const anthropic = getAnthropic();
     const { systemPrompt, messages } = await buildContext(history, docContext, anthropic);
 
     res.setHeader("Content-Type", "text/event-stream");
