@@ -53,8 +53,8 @@ export function useChat() {
       { id: assistantId, role: "assistant", content: "", streaming: true },
     ]);
 
-    // Build history for context (exclude the streaming placeholder)
-    const history = [...messages, userMsg].map(({ role, content }) => ({ role, content }));
+    // Build history — previous messages only; server appends the new user message itself
+    const history = messages.map(({ role, content }) => ({ role, content }));
 
     try {
       const res = await fetch("/api/chat", {
